@@ -263,62 +263,63 @@ With `NDEBUG` #defined, these macros do nothing. You may need to `#undef NDEBUG`
 
 ## DietSerial Functions - Input and Output
 
+All functions are members of the `DietSerial` object.  That is, write `DietSerial.begin();`, not just `begin();` in your code.
+
 ### INPUT
 
-|Function                          |Remarks                                                                                                                                                                                                                                   |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`begin(BAUDRATE)`                 |Default baud rate with `begin()` is 9600.                                                                                                                                                                                                 |
-|`end()`                           |Disables the hardware and powers it off.                                                                                                                                                                                                  |
-|`setTimeOut(timeout_milliseconds)`|Sets the time that `read()` should  wait for input before giving up. The default is 90000 (90 seconds). Single-character `read()` returns a `NAK` character, `0x15`, if the timeout expired. Other functions return a non-zero error code.|
-|`available()`                     |Returns `true` or `false`, whether a byte has been received by the hardware ready to be read.                                                                                                                                             |
-|`hasByte()`                       |A synonym for `available()`.                                                                                                                                                                                                              |
-|`read()`                          |Returns a single byte : `uint8_t ch = DietSerial.read();`. Returns a `NAK` `0x15`, "receive unsuccessful", if the timeout expires, or a `CAN`, `0x18`, "discard character", if a transmission error was detected.                         |
-|`read(buffer, buflen)`|Reads a line of text terminated with CR and LF, or just LF, into the supplied array of bytes buffer. Replaces the CR-LF or LF at the end with a NULL character. If no CR or LF is received after `buflen` characters are received, returns an error code "buffer too small" and replaces the last character with a NULL. Returns integer error codes for other errors also: `int rcvErr = DietSerial.read(buffer, buflen); // rcvErr is 0, 1, 2, 4, or 8.`|
-|`readln(buffer, buflen)`        |Synonym for `read(buffer, buflen)`. Makes it explicit that you are expecting a line of text from the serial input. Error codes as described under `read(buffer, buflen)` above.       |
-|`readBytes(buffer, nbrBytes)`     |Read exactly `nbrBytes` bytes of data from serial input and store them in the supplied array `buffer`.                                                                                |
-|`parseInt()`                      |Expects a sequence of digits, possibly with a '-' in front. Reads the incoming characters until a non-digit occurs and returns a `long int` (`int32_t`).                              |
-|`parseInt(buffer)`                |Returns an integer from a sequence of digit characters in the NULL-terminated string contained in the array `buffer`, which was presumably read in with `readLine()`.                                 |
-|`parseFloat()`                    |Expects to read in a sequence of characters representing a floating-point number in "natural" format, e.g. -0.0012345. Returns a `double` with the floating-point value if successful.|
-|`parseFloat(buffer)`      |If successful, returns a `double` being the number specified in the NULL-terminated string of characters in `buffer`.                                                                                           |
-|`printError(rcvErr)`              |Prints text describing the error code returned from `read()`, `readBytes()`, `readLine()`, `parseInt()`, or `parseFloat()` to the serial output.                                      |
+|Function                     |Remarks                                                                                                                                                                                                                                                                                                                                                           |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|`begin(BAUDRATE)`            |Sets the baud rate for sending and receiving, and the default timeout duration (90 seconds) for receiving. The default baud rate, with  an "empty" `begin()`, is 9600. Recommended baud rates, if the default is too slow, are "round" numbers, e.g. 100000, 125000, but not 115200.|
+|`end()`                      |Disables the ATmega's internal serial hardware module and powers it off.|
+|`setTimeOut(_seconds)`       |Sets the number of seconds that `read()` functions should  wait for input before giving up and setting the "receive timed out" error code, inspectable with `DietSerial.error()`. Allowed values: `0` to `255`. The default is `90` (90 seconds). The timeout is per each character: successfully receiving a character resets the timer to zero, and it starts counting up to the timeout value again.|
+|`available()`                |Returns `true` or `false`, whether a byte has been received by the hardware ready to be read by your code. If `available()` is `true`, `byte b = read();` returns immediately. Otherwise, `read()` will block, waiting for a byte to appear over the wire. All multi-byte `readXxx()`  and `parseXxx()` functions block after the first character.|
+|`hasByte()`                  |A synonym for `available()`. |
+|`error()`                    |Returns the status of the last character receive attempt. `0` means no error, non-zero means an error occurred. See `printError()` for descriptions.|
+|`read()`                     |Returns a single byte : `uint8_t ch = DietSerial.read();`. Returns a `NAK` `0x15`, "receive unsuccessful", if the timeout expires, or a `CAN`, `0x18`, "discard character", if a transmission error was detected. Sets the error code which can be inspected with `error()` and described using `printError(DietSerial.error())`.  |
+|`read(buffer, buflen)`       |`size_t stringSize = DietSerial.read(buffer, buflen);`.  Reads a line of text terminated with CR and LF, or just LF, into the supplied `char` array `buffer`. Replaces the CR-LF or LF at the end with a `NUL` (decimal 0) character. Returns the length of the string read, not including the terminating `NUL`. If no CR or LF is received after `buflen - 1` characters are received, `read(buffer, buflen)` sets an error code, "buffer too small" - check it with `DietSerial.error()` - and replaces the last character with a `NUL`. `read(buffer, buflen)` sets error codes for other errors also.|
+|`readString(buffer, buflen)` |Synonym for `read(buffer, buflen)`. Makes it explicit that you are expecting a line of text from the serial input. Error codes as described under `read(buffer, buflen)` above.    |
+|`readBytes(buffer, nbrBytes)`|Read exactly `nbrBytes` bytes of data from serial input and store them in the supplied array `buffer`.                                                   |
+|`readChar()`, `readInt()`, `readLong()`, `readFloat()`, `readDouble()`| Receives 1, 2, 4, 4, or 4 binary bytes respectively, pastes them together as required, and returns the value as the specified data type.  `char c = readChar();`, `int i = readInt();`, etc.|
+|`parseInt()`                 |For numbers sent as text. Expects a sequence of digit characters, possibly with a '-' in front. Reads the incoming characters until a non-digit occurs and returns a `long int` (`int32_t`). Returns 0 if an error occurred: use `error()` to check for errors.|
+|`parseInt(buffer)`           |Returns an integer from a sequence of digit characters in the `NUL`-terminated string in the `char` array `buffer`, which may have been read in with `readString()`. Returns `0` if there was an error; use `error()` to check for successful reading of the text if `0` is a possibly correct value.|
+|`parseFloat()`               |Expects to read in a sequence of characters representing a floating-point number in "natural" format, e.g. -0.0012345. Returns a `double` with the floating-point value if successful. Returns `NAN` and sets a non-zero error code if there was an error.|
+|`parseFloat(buffer)`      | As for `parseInt(buffer)`. If successful, returns a `double` being the number specified in the NULL-terminated string of characters in `buffer`.                                                                                           |
+|`printError(DietSerial.error())`|Prints text describing the error code returned from `read()`, `readBytes()`, `readLine()`, `parseInt()`, or `parseFloat()` to the serial output. Error codes are `0`: no error, `1`: read timed out, `2`: data is garbled, discard the byte or bytes, `4`: other error, for example zero bytes before `<CR>` or `<LF>` in `readstring()`, `8`: supplied buffer is too small. |
 
 
 ### OUTPUT
 
 |Function              |Remarks                                                                                 |
 |----------------------|----------------------------------------------------------------------------------------|
-|`begin(BAUDRATE)`     |default is  9600.                                                                       |
-|`end()`               |disables the hardware and turns it off, saving a few microamps                          |
-|`flush()`             |flush waits for the last byte to be transmitted by the USART hardware.                  |
-|`print()`, `println()`|print most types of data in readable format.                                            |
-|`printBinary()`       |print a byte as a fixed length string of form "0b0011 1010".                            |
-|`printDigit()`        |print the lower 4 bits of the given byte as a single hexadecimal character 0-9,a-f.     |
-|`printP()`, `printlnP()`|print named strings stored in program memory (flash).                                       |
-|`write()`             |send individual characters(`write(c)`), or blocks of bytes (`write(array, sizeOfArray)`) without making them readable.|
-
-
-### To Print Named Strings Stored In Program Memory
-
-    static const char infoString[] PROGMEM = "InfoInfoInfoInfo";
-
-    DietSerial.printlnP(infoString);  // no square brackets on the name
+|`begin(BAUDRATE)`     |The default is 9600.                                                                    |
+|`end()`               |Disables the hardware and turns it off, saving a few microamps                          |
+|`flush()`             |Flush waits for the last byte to be transmitted by the USART hardware.                  |
+|`print()`, `println()`|Print most types of data in readable format.                                            |
+|`printBinary()`       |Print a byte as a fixed length string of form "0b0011 1010".                            |
+|`printDigit()`        |Print the lower 4 bits of the given byte as a single hexadecimal character 0-9,a-f.     |
+|`printP()`, `printlnP()`|Print named strings stored in program memory (flash). `printP(promptText);` works with `promptText` defined as `static char promptText[] PROGMEM = "Type something please: ";`.  Useful if you want to print the same string in several places in your code.|
+|`write()`             |send individual characters(`write(c)`), or blocks of bytes (`write(array, sizeOfArray)`) without making them readable. There are also versions for `int`, `long`, `float`, and `double` variables, and the `unsigned` variants `unsigned int` and  `unsigned long`: `write(integerVar)`, `write(floatVar)`, etc. These send the variables as fixed-length binary: `write(floatVar)` will send 4 bytes, ready to read at the other end with `float f2 = readFloat();`.|
 
 
 All the above functions are members of the `DietSerial` object. Use `DietSerial.begin();`, and so on.
 
-You might like to define shorthand macros to save on typing and clutter in your code:
+You might like to define shorthand macros and/or reference variables to save on typing and clutter in your code:
 
-      #define DS DietSerial   // now can use DS.begin(), DS.println()
+      #define DS DietSerial       // Now you can use DS.begin();, DS.println(); etc.
+
+      auto& DSref = DietSerial;   // DSref is a reference to DietSerial; now you can use DSref.begin();  etc.
 
       #define flashString(stringName, stringValue) static const char stringName[] PROGMEM = stringValue
-      // now can use: flashString(infoString2, "InfoInfoInfo");
+      // Now you can use:
+      // flashString(infoString1, "InfoInfoInfo");
+      // DietSerial.printlnP(infoString1);
 
 
 ### Floating-Point Uses More RAM
 
-If you print floating-point numbers in readable format, `DietSerial` uses an extra 2kb-ish of flash memory and 28 bytes of RAM, in the AVR-libC standard library function `dtostrf()` for formatting floating-point numbers.
+If you print floating-point numbers in readable format, `DietSerial` uses an extra 2kb-ish of flash memory and 20-ish bytes of RAM, in the AVR-libC standard library function `dtostrf()` for formatting floating-point numbers.
 
-## Limitations
+## Limitations on Sending
 
 Besides those listed above? :-)  You have to wait.
 
@@ -326,11 +327,11 @@ Because Arduino claims the "USART Data Register Empty" interrupt for its Serial 
 
 `print()` and `printP()`, `println` and `printlnP()` mostly wait for the hardware to trundle the bits and bytes out over the wire, and they will return to your code only when the last byte has been handed off to the ATmega's internal hardware serial module for transmission. `flush()` waits for the hardware to tell us that that last byte has been sent.
 
-## Installation
+## INSTALLATION
 
-Click the green "Code" button, and choose "Download zip".  Unzip the downloaded zip file into your Arduino "libraries" folder inside your sketchbook folder.
+Click the green "Code" button, and choose "Download zip".  Unzip the downloaded zip file into your Arduino "libraries" folder inside your sketchbook folder.  If using the Arduino IDE, search for DietSerial in the library manager.
 
-## Usage
+## USAGE
 
 Include the file at the top of your sketch:
 
@@ -340,11 +341,9 @@ Then use the functions and macros described above, seasoning to taste.
 
 ## TODO
 
-as at 2025-09-16  GvP.
+as at 2025-09-24  GvP.
 
 ### Maybe
-
-Adapt to support the ATmega2560 and/or ATmega1284P microcontrollers.
 
 Document functions more thoroughly.
 
@@ -353,10 +352,10 @@ Measure flash and RAM consumption more rigorously.
 
 ### Unlikely
 
+Adapt to support the ATmega2560 and/or ATmega1284P microcontrollers.
+
 Adapt to support the ATtiny44/84 or ATtiny45/85 microcontrollers.
 
 Support other parities, stop bits, and error checking.
-
-Support timeout. (The obvious way would use 8 bytes of RAM.)
 
 Non-blocking transmit functions, controlled with a "WANT" define, for use outside the Arduino environment.

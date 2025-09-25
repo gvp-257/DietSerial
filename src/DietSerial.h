@@ -94,7 +94,7 @@ public:
         {return timeout_seconds_;}
 
     inline
-    void    setTimeout(uint8_t newto)
+    void    setTimeout(uint8_t newto = 90)
         {timeout_seconds_ = newto;}
 
     inline
