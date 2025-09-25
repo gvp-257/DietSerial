@@ -1,0 +1,68 @@
+# Syntax Coloring Map For DietSerial
+
+# Datatypes (KEYWORD1)
+DietSerial	KEYWORD1
+
+
+# Methods and Functions (KEYWORD2)
+available	KEYWORD2
+begin	KEYWORD2
+byteOK	KEYWORD2
+end	KEYWORD2
+error	KEYWORD2
+flush	KEYWORD2
+getTimeout	KEYWORD2
+hasByte	KEYWORD2
+isReady	KEYWORD2
+parseFloat	KEYWORD2
+parseInt	KEYWORD2
+print	KEYWORD2
+printBinary	KEYWORD2
+printDigit	KEYWORD2
+printError	KEYWORD2
+println	KEYWORD2
+printlnP	KEYWORD2
+printP	KEYWORD2
+read	KEYWORD2
+readByte	KEYWORD2
+readBytes	KEYWORD2
+readDouble	KEYWORD2
+readFloat	KEYWORD2
+readInt	KEYWORD2
+readLong	KEYWORD2
+readString	KEYWORD2
+readStringExcept	KEYWORD2
+ready	KEYWORD2
+setTimeout	KEYWORD2
+wantChar	KEYWORD2
+write	KEYWORD2
+
+# shorthand for printing common characters
+apos	KEYWORD2
+at	KEYWORD2
+colon	KEYWORD2
+comma	KEYWORD2
+crlf	KEYWORD2
+dash	KEYWORD2
+dollar	KEYWORD2
+dot	KEYWORD2
+dquote	KEYWORD2
+equals	KEYWORD2
+langle	KEYWORD2
+lparen	KEYWORD2
+minus	KEYWORD2
+plus	KEYWORD2
+qmark	KEYWORD2
+rangle	KEYWORD2
+rparen	KEYWORD2
+star	KEYWORD2
+tab	KEYWORD2
+vbar	KEYWORD2
+
+
+# Instances (KEYWORD2)
+
+# Constants (LITERAL1)
+SKIP_ALL	LITERAL1
+SKIP_NONE	LITERAL1
+SKIP_WHITESPACE	LITERAL1
